@@ -12,8 +12,31 @@ def calculate_distance_matrix(df)->pd.DataFrame():
         pandas.DataFrame: Distance matrix
     """
     # Write your logic here
-
-    return df
+    # Creating an empty dataframe with unique IDs
+    unique_ids = sorted(set(df['id_start']).union(df['id_end']))
+    distance_matrix = pd.DataFrame(index=unique_ids, columns=unique_ids)
+    
+    # Filling in the distances in the matrix
+    for index, row in df.iterrows():
+        id_start, id_end, distance = row['id_start'], row['id_end'], row['distance']
+        # Setting distances for both directions
+        distance_matrix.at[id_start, id_end] = distance
+        distance_matrix.at[id_end, id_start] = distance
+    
+    #dia = 0
+    for id in unique_ids:
+        distance_matrix.at[id, id] = 0
+    
+    # Filling in missing values with cumulative distances
+    for col in distance_matrix.columns:
+        for row in distance_matrix.index:
+            if pd.isna(distance_matrix.at[row, col]):
+                distance_matrix.at[row, col] = distance_matrix[row].sum()
+    
+    # Ensuring matrix is symmetric
+    distance_matrix = distance_matrix.fillna(0) + distance_matrix.fillna(0).T
+    
+    return distance_matrix
 
 
 def unroll_distance_matrix(df)->pd.DataFrame():
